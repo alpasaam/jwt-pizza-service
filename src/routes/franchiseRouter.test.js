@@ -60,3 +60,13 @@ test('getUserFranchises requires auth', async () => {
   expect(res.status).toBe(401);
   expect(res.body.message).toBe('unauthorized');
 });
+
+
+test('createStore requires auth', async () => {
+  const res = await request(app)
+    .post('/api/franchise/1/store')
+    .send({ franchiseId: 1, name: 'Store1' });
+  expect(res.status).toBe(401);
+  expect(res.body.message).toBe('unauthorized');
+});
+
