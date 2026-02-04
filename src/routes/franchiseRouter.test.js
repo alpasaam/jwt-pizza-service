@@ -22,4 +22,15 @@ test('createFranchise requires auth', async () => {
   expect(res.body.message).toBe('unauthorized');
 });
 
+test('createFranchise requires admin role', async () => {
+  const franchiseeLogin = await request(app).put('/api/auth').send({ email: franchiseeUser.email, password: franchiseeUser.password });
+  const token = franchiseeLogin.body.token;
+
+  const res = await request(app)
+    .post('/api/franchise')
+    .set('Authorization', `Bearer ${token}`)
+    .send({ name: 'TestFranchise', admins: [{ email: franchiseeUser.email }] });
+  expect(res.status).toBe(403);
+  expect(res.body.message).toBe('unable to create a franchise');
+});
 
