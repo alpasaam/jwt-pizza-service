@@ -34,3 +34,15 @@ test('createFranchise requires admin role', async () => {
   expect(res.body.message).toBe('unable to create a franchise');
 });
 
+test('createFranchise creates franchise and assigns admin', async () => {
+  const name = 'Franchise-' + Math.random().toString(36).substring(2, 12);
+  const res = await request(app)
+    .post('/api/franchise')
+    .set('Authorization', `Bearer ${adminToken}`)
+    .send({ name, admins: [{ email: franchiseeUser.email }] });
+  expect(res.status).toBe(200);
+  expect(res.body.name).toBe(name);
+  expect(res.body.id).toBeDefined();
+  expect(res.body.admins).toEqual(expect.arrayContaining([expect.objectContaining({ email: franchiseeUser.email })]));
+});
+
