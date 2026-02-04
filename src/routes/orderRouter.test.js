@@ -1,15 +1,5 @@
 const request = require('supertest');
 const app = require('../service');
-const { createAdminUser } = require('../testHelpers.js');
-
-let adminUser;
-let adminToken;
-
-beforeAll(async () => {
-  adminUser = await createAdminUser();
-  const loginRes = await request(app).put('/api/auth').send({ email: adminUser.email, password: adminUser.password });
-  adminToken = loginRes.body.token;
-});
 
 test('getMenu returns array', async () => {
   const res = await request(app).get('/api/order/menu');
