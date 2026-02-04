@@ -55,3 +55,8 @@ test('getFranchises returns franchises and more flag', async () => {
   expect(Array.isArray(res.body.franchises)).toBe(true);
 });
 
+test('getUserFranchises requires auth', async () => {
+  const res = await request(app).get(`/api/franchise/${franchiseeUser.id}`);
+  expect(res.status).toBe(401);
+  expect(res.body.message).toBe('unauthorized');
+});
