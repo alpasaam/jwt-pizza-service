@@ -1,0 +1,39 @@
+const request = require('supertest');
+const app = require('../service');
+const { createDinerUser } = require('../testHelpers.js');
+
+let dinerUser;
+let dinerToken;
+
+beforeAll(async () => {
+  dinerUser = await createDinerUser();
+  const dinerLogin = await request(app).put('/api/auth').send({ email: dinerUser.email, password: dinerUser.password });
+  dinerToken = dinerLogin.body.token;
+});
+
+test('get /me requires auth', async () => {
+  const res = await request(app).get('/api/user/me');
+  expect(res.status).toBe(401);
+  expect(res.body.message).toBe('unauthorized');
+});
+
+test('get /me returns current user', async () => {
+  const res = await request(app).get('/api/user/me').set('Authorization', `Bearer ${dinerToken}`);
+  expect(res.status).toBe(200);
+  expect(res.body.id).toBe(dinerUser.id);
+  expect(res.body.email).toBe(dinerUser.email);
+  expect(res.body.name).toBe(dinerUser.name);
+  expect(res.body.roles).toEqual([{ role: 'diner' }]);
+});
+
+test('updateUser allows user to update self', async () => {
+  const newName = Math.random().toString(36).substring(2, 12);
+  const res = await request(app)
+    .put(`/api/user/${dinerUser.id}`)
+    .set('Authorization', `Bearer ${dinerToken}`)
+    .send({ name: newName, email: dinerUser.email });
+  expect(res.status).toBe(200);
+  expect(res.body.user.name).toBe(newName);
+  expect(res.body.token).toBeDefined();
+});
+
