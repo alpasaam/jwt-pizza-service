@@ -99,6 +99,27 @@ class DB {
     }
   }
 
+  async listUsers(page = 1, limit = 10, nameFilter = '*') {
+    const connection = await this.getConnection();
+    try {
+      const offset = (page - 1) * limit;
+      const limitPlusOne = Number(limit) + 1;
+      const useNameFilter = nameFilter && nameFilter !== '*';
+      const whereClause = useNameFilter ? 'WHERE name LIKE ?' : '';
+      const params = useNameFilter ? [`%${nameFilter}%`] : [];
+      const rows = await this.query(connection, `SELECT id, name, email FROM user ${whereClause} ORDER BY id LIMIT ${limitPlusOne} OFFSET ${offset}`, params);
+      const hasMore = rows.length > limit;
+      const users = rows.slice(0, limit);
+      for (const user of users) {
+        const roleResult = await this.query(connection, `SELECT role, objectId FROM userRole WHERE userId=?`, [user.id]);
+        user.roles = roleResult.map((r) => ({ role: r.role, objectId: r.objectId || undefined }));
+      }
+      return { users, more: hasMore };
+    } finally {
+      connection.end();
+    }
+  }
+
   async loginUser(userId, token) {
     token = this.getTokenSignature(token);
     const connection = await this.getConnection();

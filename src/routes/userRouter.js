@@ -85,7 +85,11 @@ userRouter.get(
     if (!req.user.isRole(Role.Admin)) {
       return res.status(403).json({ message: 'forbidden' });
     }
-    res.json({ users: [], more: false });
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const name = req.query.name || '*';
+    const result = await DB.listUsers(page, limit, name);
+    res.json(result);
   })
 );
 

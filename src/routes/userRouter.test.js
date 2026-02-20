@@ -60,6 +60,26 @@ test('list users', async () => {
   expect(listUsersRes.body).toHaveProperty('users');
   expect(Array.isArray(listUsersRes.body.users)).toBe(true);
   expect(listUsersRes.body).toHaveProperty('more');
+  expect(listUsersRes.body.users.length).toBeGreaterThanOrEqual(1);
+  const first = listUsersRes.body.users[0];
+  expect(first).toHaveProperty('id');
+  expect(first).toHaveProperty('name');
+  expect(first).toHaveProperty('email');
+  expect(first).toHaveProperty('roles');
+  expect(first).not.toHaveProperty('password');
+});
+
+test('list users filters by name', async () => {
+  await request(app).post('/api/auth').send({ name: 'testName', email: randomName() + '@test.com', password: 'p' });
+  const adminUser = await createAdminUser();
+  const loginRes = await request(app).put('/api/auth').send({ email: adminUser.email, password: adminUser.password });
+  const adminToken = loginRes.body.token;
+  const listUsersRes = await request(app)
+    .get('/api/user?name=testName')
+    .set('Authorization', 'Bearer ' + adminToken);
+  expect(listUsersRes.status).toBe(200);
+  expect(listUsersRes.body.users.some((u) => u.name === 'testName')).toBe(true);
+  expect(listUsersRes.body.users.every((u) => u.name.includes('testName'))).toBe(true);
 });
 
 async function registerUser(service) {
