@@ -37,6 +37,15 @@ test('updateUser allows user to update self', async () => {
   expect(res.body.token).toBeDefined();
 });
 
+test('updateUser forbidden when diner updates another user', async () => {
+  const otherUser = await createDinerUser();
+  const res = await request(app)
+    .put(`/api/user/${otherUser.id}`)
+    .set('Authorization', `Bearer ${dinerToken}`)
+    .send({ name: 'other', email: otherUser.email });
+  expect(res.status).toBe(403);
+});
+
 test('list users unauthorized', async () => {
   const listUsersRes = await request(app).get('/api/user');
   expect(listUsersRes.status).toBe(401);
