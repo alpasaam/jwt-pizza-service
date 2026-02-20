@@ -120,6 +120,24 @@ class DB {
     }
   }
 
+  async deleteUser(userId) {
+    const connection = await this.getConnection();
+    try {
+      const orders = await this.query(connection, `SELECT id FROM dinerOrder WHERE dinerId=?`, [userId]);
+      const orderIds = orders.map((o) => o.id);
+      if (orderIds.length > 0) {
+        const placeholders = orderIds.map(() => '?').join(',');
+        await this.query(connection, `DELETE FROM orderItem WHERE orderId IN (${placeholders})`, orderIds);
+      }
+      await this.query(connection, `DELETE FROM dinerOrder WHERE dinerId=?`, [userId]);
+      await this.query(connection, `DELETE FROM auth WHERE userId=?`, [userId]);
+      await this.query(connection, `DELETE FROM userRole WHERE userId=?`, [userId]);
+      await this.query(connection, `DELETE FROM user WHERE id=?`, [userId]);
+    } finally {
+      connection.end();
+    }
+  }
+
   async loginUser(userId, token) {
     token = this.getTokenSignature(token);
     const connection = await this.getConnection();

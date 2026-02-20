@@ -42,7 +42,7 @@ test('list users unauthorized', async () => {
   expect(listUsersRes.status).toBe(401);
 });
 
-test('list users forbidden for non-admin', async () => {
+test('list users forbidden for diner', async () => {
   const listUsersRes = await request(app)
     .get('/api/user')
     .set('Authorization', 'Bearer ' + dinerToken);
@@ -80,6 +80,31 @@ test('list users filters by name', async () => {
   expect(listUsersRes.status).toBe(200);
   expect(listUsersRes.body.users.some((u) => u.name === 'testName')).toBe(true);
   expect(listUsersRes.body.users.every((u) => u.name.includes('testName'))).toBe(true);
+});
+
+test('delete user unauthorized', async () => {
+  const res = await request(app).delete(`/api/user/${dinerUser.id}`);
+  expect(res.status).toBe(401);
+});
+
+test('delete user forbidden for diner', async () => {
+  const res = await request(app)
+    .delete(`/api/user/${dinerUser.id}`)
+    .set('Authorization', 'Bearer ' + dinerToken);
+  expect(res.status).toBe(403);
+});
+
+test('delete user', async () => {
+  const toDelete = await createDinerUser();
+  const adminUser = await createAdminUser();
+  const loginRes = await request(app).put('/api/auth').send({ email: adminUser.email, password: adminUser.password });
+  const adminToken = loginRes.body.token;
+  const res = await request(app)
+    .delete(`/api/user/${toDelete.id}`)
+    .set('Authorization', 'Bearer ' + adminToken);
+  expect(res.status).toBe(200);
+  const listRes = await request(app).get('/api/user').set('Authorization', 'Bearer ' + adminToken);
+  expect(listRes.body.users.some((u) => u.id === toDelete.id)).toBe(false);
 });
 
 async function registerUser(service) {
