@@ -1,6 +1,6 @@
 const request = require('supertest');
 const app = require('../service');
-const { createDinerUser, createAdminUser } = require('../testHelpers.js');
+const { createDinerUser, createAdminUser, createDinerUserWithOrder } = require('../testHelpers.js');
 
 let dinerUser;
 let dinerToken;
@@ -105,6 +105,19 @@ test('delete user forbidden for diner', async () => {
 
 test('delete user', async () => {
   const toDelete = await createDinerUser();
+  const adminUser = await createAdminUser();
+  const loginRes = await request(app).put('/api/auth').send({ email: adminUser.email, password: adminUser.password });
+  const adminToken = loginRes.body.token;
+  const res = await request(app)
+    .delete(`/api/user/${toDelete.id}`)
+    .set('Authorization', 'Bearer ' + adminToken);
+  expect(res.status).toBe(200);
+  const listRes = await request(app).get('/api/user').set('Authorization', 'Bearer ' + adminToken);
+  expect(listRes.body.users.some((u) => u.id === toDelete.id)).toBe(false);
+});
+
+test('delete user with orders', async () => {
+  const toDelete = await createDinerUserWithOrder();
   const adminUser = await createAdminUser();
   const loginRes = await request(app).put('/api/auth').send({ email: adminUser.email, password: adminUser.password });
   const adminToken = loginRes.body.token;
