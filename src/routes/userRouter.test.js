@@ -1,6 +1,6 @@
 const request = require('supertest');
 const app = require('../service');
-const { createDinerUser } = require('../testHelpers.js');
+const { createDinerUser, createAdminUser } = require('../testHelpers.js');
 
 let dinerUser;
 let dinerToken;
@@ -42,12 +42,24 @@ test('list users unauthorized', async () => {
   expect(listUsersRes.status).toBe(401);
 });
 
-test('list users', async () => {
-  const [user, userToken] = await registerUser(request(app));
+test('list users forbidden for non-admin', async () => {
   const listUsersRes = await request(app)
     .get('/api/user')
-    .set('Authorization', 'Bearer ' + userToken);
+    .set('Authorization', 'Bearer ' + dinerToken);
+  expect(listUsersRes.status).toBe(403);
+});
+
+test('list users', async () => {
+  const adminUser = await createAdminUser();
+  const loginRes = await request(app).put('/api/auth').send({ email: adminUser.email, password: adminUser.password });
+  const adminToken = loginRes.body.token;
+  const listUsersRes = await request(app)
+    .get('/api/user')
+    .set('Authorization', 'Bearer ' + adminToken);
   expect(listUsersRes.status).toBe(200);
+  expect(listUsersRes.body).toHaveProperty('users');
+  expect(Array.isArray(listUsersRes.body.users)).toBe(true);
+  expect(listUsersRes.body).toHaveProperty('more');
 });
 
 async function registerUser(service) {

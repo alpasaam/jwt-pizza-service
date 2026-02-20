@@ -82,7 +82,10 @@ userRouter.get(
   '/',
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
-    res.json({});
+    if (!req.user.isRole(Role.Admin)) {
+      return res.status(403).json({ message: 'forbidden' });
+    }
+    res.json({ users: [], more: false });
   })
 );
 
