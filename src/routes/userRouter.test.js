@@ -129,18 +129,6 @@ test('delete user with orders', async () => {
   expect(listRes.body.users.some((u) => u.id === toDelete.id)).toBe(false);
 });
 
-async function registerUser(service) {
-  const testUser = {
-    name: 'pizza diner',
-    email: `${randomName()}@test.com`,
-    password: 'a',
-  };
-  const registerRes = await service.post('/api/auth').send(testUser);
-  registerRes.body.user.password = testUser.password;
-
-  return [registerRes.body.user, registerRes.body.token];
-}
-
 function randomName() {
   return Math.random().toString(36).substring(2, 12);
 }
