@@ -1,5 +1,6 @@
 const express = require('express');
 const config = require('../config.js');
+const metrics = require('../metrics.js');
 const { Role, DB } = require('../database/database.js');
 const { authRouter } = require('./authRouter.js');
 const { asyncHandler, StatusCodeError } = require('../endpointHelper.js');
@@ -79,15 +80,21 @@ orderRouter.post(
   asyncHandler(async (req, res) => {
     const orderReq = req.body;
     const order = await DB.addDinerOrder(req.user, orderReq);
+    const start = Date.now();
     const r = await fetch(`${config.factory.url}/api/order`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', authorization: `Bearer ${config.factory.apiKey}` },
       body: JSON.stringify({ diner: { id: req.user.id, name: req.user.name, email: req.user.email }, order }),
     });
+    const latencyMs = Date.now() - start;
     const j = await r.json();
+    const pizzasCount = (orderReq.items || []).length;
+    const revenue = (orderReq.items || []).reduce((sum, item) => sum + (Number(item.price) || 0), 0);
     if (r.ok) {
+      metrics.pizzaPurchase(true, latencyMs, pizzasCount, revenue);
       res.send({ order, followLinkToEndChaos: j.reportUrl, jwt: j.jwt });
     } else {
+      metrics.pizzaPurchase(false, latencyMs, 0, 0);
       res.status(500).send({ message: 'Failed to fulfill order at factory', followLinkToEndChaos: j.reportUrl });
     }
   })
