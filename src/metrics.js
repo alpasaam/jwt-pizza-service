@@ -16,9 +16,7 @@ if (!config.metrics) {
     userLogout: () => {},
     pizzaPurchase: () => {},
   };
-  return;
-}
-
+} else {
 const requests = {};
 const requestDurations = {};
 let authSuccessCount = 0;
@@ -127,7 +125,7 @@ function sendToGrafana(metricsToSend) {
 }
 
 function sendMetricsPeriodically(periodMs) {
-  setInterval(() => {
+  const timer = setInterval(() => {
     try {
       const metricsToSend = [];
 
@@ -156,6 +154,7 @@ function sendMetricsPeriodically(periodMs) {
       console.error('Error sending metrics', error);
     }
   }, periodMs);
+  if (typeof timer.unref === 'function') timer.unref();
 }
 
 sendMetricsPeriodically(10000);
@@ -168,3 +167,4 @@ module.exports = {
   userLogout,
   pizzaPurchase,
 };
+}
