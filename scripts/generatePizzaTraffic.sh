@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Simulating traffic — from devops329 instruction simulatingTraffic.md
+# Sleeps are intentionally long-ish for lighter load; shorten them if you want hotter traffic.
 # Usage: ./scripts/generatePizzaTraffic.sh <host>
 # Example: ./scripts/generatePizzaTraffic.sh https://pizza-service.yourdomainname.click
 # Example: ./scripts/generatePizzaTraffic.sh http://localhost:3000
@@ -33,31 +34,31 @@ login() {
 while true; do
   result=$(execute_curl "$host/api/order/menu")
   echo "Requesting menu..." $result
-  sleep 1
+  sleep 6
 done &
 pid1=$!
 
 while true; do
   result=$(execute_curl "$host/api/order/menu")
   echo "Requesting menu (2)..." $result
-  sleep 0.8
+  sleep 5
 done &
 pid1b=$!
 
 while true; do
   result=$(execute_curl "-X PUT \"$host/api/auth\" -d '{\"email\":\"unknown@jwt.com\", \"password\":\"bad\"}' -H 'Content-Type: application/json'")
   echo "Logging in with invalid credentials..." $result
-  sleep 5
+  sleep 20
 done &
 pid2=$!
 
 while true; do
   token=$(login "f@jwt.com" "franchisee")
   echo "Login franchisee..." $( [ -z "$token" ] && echo "false" || echo "true" )
-  sleep 25
+  sleep 90
   result=$(execute_curl "-X DELETE $host/api/auth -H \"Authorization: Bearer $token\"")
   echo "Logging out franchisee..." $result
-  sleep 3
+  sleep 12
 done &
 pid3=$!
 
@@ -66,10 +67,10 @@ while true; do
   echo "Login diner..." $( [ -z "$token" ] && echo "false" || echo "true" )
   result=$(execute_curl "-X POST $host/api/order -H 'Content-Type: application/json' -d '{\"franchiseId\": 1, \"storeId\":1, \"items\":[{ \"menuId\": 1, \"description\": \"Veggie\", \"price\": 25 }]}' -H \"Authorization: Bearer $token\"")
   echo "Bought a pizza..." $result
-  sleep 5
+  sleep 20
   result=$(execute_curl "-X DELETE $host/api/auth -H \"Authorization: Bearer $token\"")
   echo "Logging out diner..." $result
-  sleep 8
+  sleep 30
 done &
 pid4=$!
 
@@ -84,10 +85,10 @@ while true; do
 
   result=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$host/api/order" -H 'Content-Type: application/json' -d "{\"franchiseId\": 1, \"storeId\":1, \"items\":[$items]}" -H "Authorization: Bearer $token")
   echo "Bought too many pizzas..." $result
-  sleep 2
+  sleep 8
   result=$(execute_curl "-X DELETE $host/api/auth -H \"Authorization: Bearer $token\"")
   echo "Logging out hungry diner..." $result
-  sleep 45
+  sleep 180
 done &
 pid5=$!
 
