@@ -42,6 +42,14 @@ orderRouter.docs = [
     example: `curl -X POST localhost:3000/api/order -H 'Content-Type: application/json' -d '{"franchiseId": 1, "storeId":1, "items":[{ "menuId": 1, "description": "Veggie", "price": 0.05 }]}'  -H 'Authorization: Bearer tttttt'`,
     response: { order: { franchiseId: 1, storeId: 1, items: [{ menuId: 1, description: 'Veggie', price: 0.05 }], id: 1 }, jwt: '1111111111' },
   },
+  {
+    method: 'PUT',
+    path: '/api/order/chaos/:state',
+    requiresAuth: true,
+    description: 'Admin: enable (true) or disable (false) random order failures for chaos testing',
+    example: `curl -X PUT localhost:3000/api/order/chaos/true -H 'Authorization: Bearer ADMIN_TOKEN'`,
+    response: { chaos: true },
+  },
 ];
 
 // getMenu
@@ -90,6 +98,7 @@ orderRouter.put(
 
 orderRouter.post('/', (req, res, next) => {
   if (enableChaos && Math.random() < 0.5) {
+    metrics.pizzaPurchase(false, 0, 0, 0);
     throw new StatusCodeError('Chaos monkey', 500);
   }
   next();
